@@ -1,56 +1,65 @@
 # Todo
 
+Build order. A step is done when its proofs from the plan pass.
+
 ## Now
 
 - [ ] `decision` **Domain, mail provider and hosting**
   ~XS @startup `setup-choices`
-  See "Choices per startup" in the plan: `deck.<domain>`, an EU mail provider with DKIM, an EU VPS.
+  See "Choices per startup" in the plan.
 
 - [ ] `feature` **Skeleton: Nuxt app, database, team login**
   ~M @builder `skeleton`
   Nuxt 4, SQLite through Drizzle, sealed session, login by email code from an allow-list, Mailpit locally.
+  Proof: P11 (mail configuration fails loudly).
 
-- [ ] `feature` **Decks from DECKS_DIR with versions**
-  ~S @builder `decks`
-  Scan `deck.json`, copy each version (HTML and assets) under its hash, and add a demo deck in `examples/`.
-  Geblokkeerd door: `skeleton`.
+- [ ] `feature` **Deck format, slide components and publish**
+  ~M @builder `deck`
+  Zod schema, one Vue component per type, `deck:publish` with lint and a hash snapshot, and the demo deck.
+  Proof: P1.
+  Blocked by: `skeleton`.
 
-- [ ] `feature` **Links and server gate**
+- [ ] `feature` **Runtime, navigation and presenter view**
+  ~M @builder `runtime`
+  reveal.js as a client-only component with the plan's settings, `/present` for the team, and print view.
+  Proof: P2, P3, P9.
+  Blocked by: `deck`.
+
+- [ ] `feature` **Links, gate and consent**
   ~M @builder `gate`
-  Public and email links, code mail, grants in the cookie, headers, Range for video, attempt and send limits.
-  Geblokkeerd door: `decks`.
+  Open and code links, consent buttons, grants, the code mail, limits, headers and X-Accel-Redirect.
+  Proof: P4, P5, P6, P10, P11.
+  Blocked by: `runtime`.
 
 - [ ] `feature` **Tracker and visits**
   ~M @builder `tracking`
-  Inject `public/tracker.js`; open by POST, slide time, bot flag, version pinning.
-  Geblokkeerd door: `gate`.
+  A visit from the gate POST, the tracker only with consent, cumulative ms per slide, and the bot flag.
+  Proof: P7, P8.
+  Blocked by: `gate`.
 
-- [ ] `feature` **Admin stats and invite text**
+- [ ] `feature` **Stats, alerts and invite text**
   ~M @builder `stats`
-  Per link and per recipient, numbers labelled as estimates, a "Copy invite" button, and the first-open alert.
-  Geblokkeerd door: `tracking`.
+  Per link and recipient, drop-off, visit alerts, and "Copy invite".
+  Proof: P13.
+  Blocked by: `tracking`.
 
-- [ ] `feature` **Consent, retention and erasure**
+- [ ] `feature` **Retention and erasure**
   ~S @builder `privacy`
-  Store and withdraw the gate choice, delete after 12 months in a daily job, and erase per recipient.
-  Geblokkeerd door: `tracking`.
-
-- [ ] `chore` **Convert the startup's decks**
-  ~S @builder `deck-import`
-  Strip their own gate and tracking code, make paths relative, self-host fonts, add `data-slide-id`.
-  Geblokkeerd door: `decks`.
+  The daily delete job, and erasure per recipient.
+  Proof: P12.
+  Blocked by: `tracking`.
 
 - [ ] `chore` **First release**
   ~S @builder `release`
-  An EU VPS, the domain and mail live, the full Proof list green, and a test mail to a real inbox.
-  Geblokkeerd door: `setup-choices`, `stats`, `privacy`, `deck-import`.
+  An EU VPS behind nginx, the domain and mail live, all proofs green, and a test mail to a real inbox.
+  Blocked by: `setup-choices`, `stats`, `privacy`.
 
 ## Later / blocked
 
-- [ ] `feature` **Comments per slide and notification**
+- [ ] `feature` **Editor UI**
+  ~L @startup `editor`
+  Edit `deck.yml` in the browser with a live preview; publish keeps the same checks.
+
+- [ ] `feature` **Comments per slide**
   ~S @startup `comments`
   The notification goes to the link's creator, with the text escaped.
-
-- [ ] `feature` **Contacts with pipeline stages**
-  ~M @startup `contacts`
-  Only if the funnel does not live elsewhere; otherwise there are two truths.

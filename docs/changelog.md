@@ -2,6 +2,7 @@
 
 ## 23-11-2026
 
+- Blueprint widened to a pitch-deck builder: typed slides in `deck.yml`, reveal.js runtime with navigation and presenter view, publish lint, simpler tracking (cumulative time per slide, tracker only with consent), numbered proofs; from a second-model review and deck research. Proof: `docs/plan.md`, `docs/research.md`. ⇒ NEVER send speaker notes or raw deck HTML to a viewer.
 - MIT license added so any startup may reuse the blueprint; proof: `LICENSE`. ⇒ ALWAYS keep everything in this repo fit for public reuse.
 
 ## 17-11-2026

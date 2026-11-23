@@ -1,105 +1,146 @@
 ---
-Datum: 2026-11-17
+Datum: 2026-11-23
 Status: Concept
 ---
 
 # Plan
 
-A startup founder sends a deck to one person, or posts one public link, and later sees: did they open it, which slides, for how long, and did they come back. v1 does that and nothing more. Background and sources: [research report](reports/Pitchdecks%20delen%20en%20volgen.md).
+A founder writes a deck from typed slides, presents it, and sends a personal link per investor. Later the founder sees who opened it, where they dropped off, and when they came back. There is no editor UI in v1: a deck is one file that a person or an AI agent writes, and publishing checks it. Background: [research](research.md).
 
-## v1
+## 1. Deck
 
-1. **Decks.** One folder per deck in `DECKS_DIR`, outside the repo: `index.html`, assets, and `deck.json` with `title` and `language` (`nl`/`en`). Every change becomes a new immutable version: HTML and assets are copied to a folder named by content hash, and a visit stays on the version it started on. A slide is a `.slide` element; the visible one has `.active`; each slide carries a `data-slide-id` that survives edits. A page without `.slide` (an A4 sheet) is one slide.
-2. **Links.** Random slug of at least 128 bits. `mode`: `public` or `email`. An optional recipient (name and email; required for `email`), and an `internal` flag for test links. Expiry is optional; revoke and archive, never hard-delete. One active link per recipient per deck: asking for a second returns the first, because two links split the stats. A revoked link may be replaced, and the recipient view adds up both.
-3. **Gate, on the server.** Public: a gate page with the notice and an "Open deck" button. Email: "Send code" goes to the address on the link (the page shows only a masked hint), and the recipient types a 6-digit code. A passed gate adds a grant to the session; one session holds grants for several links.
-4. **Viewer.** The server injects one shared tracker script into the deck HTML. Decks carry no tracking or gate code of their own.
-5. **Team.** Own accounts from an allow-list of addresses, login by email code (bound to the purpose `team`, with the same limits). Every admin API requires an active allow-listed user; a viewer grant in the same session never opens the admin.
-6. **Admin.** Decks and versions; links (create, copy invite text, revoke, extend); per link the visits, slides reached, time per slide and last seen; per recipient all of their links.
-7. **Mail.** The access code, and a first-open alert to whoever created the link.
+A deck is a folder in `DECKS_DIR`: `deck.yml`, plus images and self-hosted fonts.
 
-**Never:** shared passwords or PINs, tracking pixels in mail, provider click tracking, AI typing links or sending invites, third-party scripts or fonts on a deck, or "screenshot protection".
-
-## Nuxt setup (example)
-
-Nuxt 4 with Nitro as a Node server on one small EU VPS. SQLite through Drizzle and `better-sqlite3` on persistent disk, in WAL mode, with a tested backup (one instance; move to Postgres only when there is a second one). A sealed session cookie via `nuxt-auth-utils`, and `nodemailer` to an EU SMTP provider. Locally, a mail catcher such as Mailpit.
-
-```
-app/pages/
-  open/[slug].vue                   gate: notice, consent choice, code form
-  login.vue                         team login by code
-  admin/...                         team screens (UX only; the API decides)
-server/
-  routes/d/[slug]/[...path].get.ts  gated deck files; injects the tracker into index.html
-  api/open/[slug]/code.post.ts      send code
-  api/open/[slug]/verify.post.ts    check code, add grant
-  api/open/[slug]/start.post.ts     "Open deck": creates the visit (this is the open)
-  api/visits/[id]/events.post.ts    tracker beacons
-  api/admin/...                     team CRUD and stats
-  utils/                            db, gate, mail, limits
-  db/schema.ts, db/migrations/
-public/tracker.js                   the only tracking script on a deck (not secret)
-examples/demo-deck/                 non-confidential deck for tests
+```yaml
+title: Acme
+language: en
+theme: { color: "#1f6feb", font: fonts/Inter.woff2 }
+slides:
+  - type: title
+    headline: Acme gets small shops paid the same day
+  - type: problem
+    headline: Small shops wait 30 days for their money
+    points: [Cash flow stalls, Banks say no, Factoring costs 4%]
+    notes: Open with the bakery story.
 ```
 
-Tables: `users`, `decks`, `deck_versions`, `links`, `codes`, `visits`, `slide_events`, `attempts`.
+**Slide types**, in the default order (Sequoia's outline with YC's traction and ask; DocSend data in the research):
 
-`/d/{slug}` without a grant redirects to `/open/{slug}`. The deck is served at `/d/{slug}/` with a trailing slash, so relative asset paths resolve under the gate. Grants sit in the sealed cookie (`runtimeConfig.session.name: '__Host-pitcher'`), with at most 20 kept to stay under the 4 KB cookie limit. Nitro serves `public/` before any middleware, and H3 does not handle video Range requests for you: the gated route answers 206 and 416 itself.
+| Type | Purpose |
+|---|---|
+| `title` | The company in one sentence |
+| `problem` | Whose pain, and how they cope today |
+| `solution` | The insight, shown as one visual |
+| `why-now` | The change that makes it possible now |
+| `product` | How it works, in three steps; no raw screenshots |
+| `traction` | One chart, with the conclusion as the headline |
+| `market` | Who buys, sized bottom-up |
+| `business-model` | How you earn money, and the unit economics |
+| `competition` | The alternatives and why you win |
+| `team` | Why these people |
+| `financials` | Key metrics, plan and burn |
+| `ask` | Amount, use of funds, the milestones it buys, and a vision line |
+| `appendix` | Risks and details, after the ask |
 
-## Rules
+- The type is the slide id, the deep link (`#/problem`) and the tracking key. A repeated type needs its own `id`. A published id never changes, because the stats hang on it.
+- Each type is one Vue component, so the design is fixed and every slide makes one point: a headline that states the claim, with at most about 50 words. Text is large and bold, contrast meets WCAG AA, and every image has alt text.
+- Markdown in fields allows emphasis and links only; raw HTML is never rendered.
 
-### Access
+**Publish** is one command, `deck:publish <folder>`, and it is the quality gate:
+- **Fails** on an unknown type, a duplicate or missing id, a missing `title`, `problem`, `solution`, `team` or `ask`, an external URL, or missing alt text.
+- **Warns** above 20 slides, above 50 words on a slide, or when a headline is longer than 12 words.
+- **Stores** the deck and its assets as an immutable version named by content hash. Each visit stays on the version it started on, and stats add up per slide id across versions.
 
-- The server gates every byte: HTML, images, and video including Range requests. ⇒ NEVER a deck file in `public/`, NEVER a client-side overlay as the gate.
-- Every request rechecks the link (revoked, expired) and the grant. No exceptions for a Host header or a "preview" route; the team previews through its own session.
-- Every gated response carries `Cache-Control: no-store`, `Vary: Cookie`, `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex`. The gate page of an email link uses a neutral `og:title`, because chat apps unfurl links.
-- The session cookie is `__Host-`, Secure, HttpOnly and SameSite=Lax, and holds a list of grants, so opening a second link never logs out the first.
-- Codes come from a CSPRNG: 6 digits, valid 10 minutes, single use and atomically consumed, stored hashed. 5 wrong tries per link per window, and a new code does not reset the count. Sends are limited per recipient (3 per 15 minutes) and per IP. Counters live in the database, keyed by a hash, and expire with their window.
-- Escape everything the admin renders; the tracker sends typed, size-capped fields.
+## 2. Runtime and navigation
 
-### Tracking
+reveal.js (MIT) runs as a client-only component and renders the slide components into `<section id="<slide id>">`. Settings: linear slides, `hash: true`, progress bar, slide number, `controlsLayout: 'edges'`, overview (`O`/`Esc`), and transition `none` when the viewer prefers reduced motion. This gives viewers:
+- Arrow keys, Space, Home and End; swipe on touch; click zones at the edges.
+- A deep link per slide, a progress bar and a counter.
+- The scroll view, which switches on by itself at phone width.
+- A screen-reader announcement of the current slide.
 
-- A visit starts only with a POST: the "Open deck" button, a correct code, or, for a returning viewer with a grant, the tracker's first call. A GET of the link never counts, because mail scanners and link previews fetch links. Within 30 minutes of inactivity it is the same visit; after that, a new one.
-- The tracker watches `.slide.active` and counts visible time only (Page Visibility API). It pauses after 60 seconds without input, unless a video is playing. It flushes every 10 seconds, on each slide change and on `visibilitychange: hidden`, using `sendBeacon`. Never `unload` or `beforeunload`.
-- The server takes link, viewer and version from the visit, never from the request body. It deduplicates by event id and caps credited time at the elapsed server time.
-- Visits from known bot user agents, bursts and visits under 3 seconds without input are flagged, kept, and left out of totals and alerts.
-- Each visit is pinned to a deck version; stats are per version and per slide id, never by position alone.
-- Team sessions and `internal` links never count. The admin labels the numbers as estimates.
-- The first-open alert fires only on a qualified open: a clicked button or a passed code, not from a bot user agent. "Open without stats" still logs that open, but no slide time.
+The team gets a presenter view at `/present/<deck>`: speaker notes, the next slide and a timer. It uses reveal's speaker view and needs a team session. If the link allows PDF, reveal's print view (`?print-pdf`) lets the viewer save the deck as a PDF.
 
-### Mail
+## 3. Share
 
-- v1 sends two mails: the access code (only to the address on the link) and the first-open alert (to the link's creator). Invitations go out from the founder's own mailbox: "Copy invite" gives the link plus one sentence in the deck language. ⇒ ALWAYS a link generated by the system, NEVER one typed by a person or an AI.
-- Send from a dedicated subdomain with SPF, DKIM and DMARC, through a provider that signs with DKIM on your domain and keeps data in the EU, for example Mailcoach, Scaleway TEM, Lettermint, Mailgun EU, or the SMTP of a Dutch host such as TransIP. Turn click and open tracking off. Include a plain-text part, no remote images, and a monitored Reply-To.
+- **Link modes.** `open` is the default: a personal link with only the consent choice as the gate. `code` is for confidential material: a 6-digit code is mailed to the address on the link, and the page shows a masked hint plus "Not you? Ask the sender for your own link". A link without a recipient is a broadcast.
+- **Links.** A random slug of at least 128 bits, an optional recipient (required for `code`), an `internal` flag, `allow_pdf` (off by default), optional expiry, revoke and archive, never a hard delete. One active link per recipient per deck; a revoked link can be replaced. The recipient view groups links by normalised email.
+- **Gate.** Every visit starts at the gate with two equal buttons, "Open with reading stats" and "Open without". A valid grant skips the code step only. Grants live in a sealed `__Host-` cookie (Secure, HttpOnly, SameSite=Lax, at most 20 grants, 30 days each). Opening a second link never logs out the first.
+- **Copy invite.** It gives the link plus one sentence in the deck language. The founder sends it from their own mailbox. ⇒ ALWAYS a link generated by the system, NEVER one typed by a person or an AI.
+
+## 4. Measure
+
+- A visit is created only by the gate POST. A GET never counts, because mail scanners and link previews fetch links. After 30 minutes of inactivity the next visit is a new one.
+- The tracker is loaded only on a visit with consent. It counts visible time per slide id (Page Visibility API), pauses after 60 seconds without input unless a video plays, and sends the **cumulative** milliseconds per slide every 10 seconds, on each slide change and on `visibilitychange: hidden`, through `sendBeacon`. The server keeps the maximum per slide and caps it at the visit's elapsed server time, so replayed or lost beacons heal themselves.
+- The server takes link, viewer and version from the visit, never from the request body. Visits from known bot user agents are flagged, kept, and left out of totals and alerts. Team sessions and `internal` links never count.
+- **Stats per link and per recipient:** visits, devices, time per slide, drop-off per slide (the last slide reached), and the share of opens with reading stats. The admin labels all numbers as estimates.
+- **Alert to the link's creator** for each visit: first open, return visit, or new device (which can mean the link was forwarded).
+
+## 5. Security
+
+- The server gates everything a viewer gets: deck data, images and video. Deck data comes from an API that checks the grant and never contains `notes`. ⇒ NEVER deck files in `public/`; NEVER a client-side overlay as the gate.
+- Every request rechecks the link (revoked, expired) and the grant. Every gated response carries `Cache-Control: no-store`, `Vary: Cookie`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex` and a CSP that loads scripts, styles, fonts and media only from the own origin (`nuxt-security` handles the nonces Nuxt needs). The gate page of a `code` link uses a neutral `og:title`.
+- Codes come from a CSPRNG: 6 digits, valid 10 minutes, single use, stored hashed. At most 5 wrong tries per link per 15 minutes, and a new code does not reset the count. Sends are capped per recipient at 3 per 15 minutes and 10 per day, and also capped per IP. Counters live in the database, keyed by hash, and expire with their window.
+- Team login works by email code from an allow-list, bound to the purpose `team`. Every admin API requires an active team user; a viewer grant never opens the admin. Escape everything the admin renders.
+- Assets and video: after the grant check, return `X-Accel-Redirect` and let nginx serve the file, Range requests included.
+
+## 6. Mail
+
+- The app sends three mails: the access code (only to the address on the link), the team login code, and the visit alert.
+- Send from a subdomain with SPF, DKIM and DMARC, through a provider that keeps data in the EU. Examples: Mailcoach, Scaleway TEM, Lettermint, Mailgun EU, or the SMTP of a Dutch host such as TransIP.
+- Turn click and open tracking off. Include a plain-text part, no remote images, and a monitored Reply-To.
 - The mail carries a code, not a magic link, because scanners open links before people do.
-- Missing mail configuration in production is an error, never a console log of the code. User text in a mail is escaped. The mail language follows the deck.
+- Missing mail configuration in production is an error, never a console log of the code. User text in a mail is escaped.
 
-### Privacy (NL)
+## 7. Privacy (NL)
 
 - The gate says who is responsible, what is logged and why, how long it is kept, and the viewer's rights and contact address, and links to the privacy page.
-- The viewer decides: time per slide is recorded only after an active choice at the gate, through two equal buttons, "Open with reading stats" and "Open without". Without it, only the open is logged. The choice is stored with the visit, and the viewer can withdraw it from the deck. This is a conservative reading of EDPB 2/2023; there is no ruling on deck tracking.
-- No IP address is stored, except as a keyed hash in a limit counter that expires with its window. The user agent becomes a device class and a bot flag on arrival.
-- Retention: visits and events 12 months, codes until used or expired, removed by a daily job. Erasure deletes that recipient's visits and events and blanks the recipient fields; the link stays archived. A soft delete is not an erasure, so here privacy law wins over any soft-delete policy.
-- Fonts, scripts and video on decks are self-hosted.
+- Time per slide only with consent (see Gate). The choice is stored with the visit and can be withdrawn from the deck. This is a conservative reading of EDPB 2/2023; there is no ruling on deck tracking.
+- No IP is stored except as an expiring hash in a limit counter. The user agent becomes a device class and a bot flag on arrival.
+- Visits and slide times are kept 12 months, then a daily job deletes them. Erasure deletes a recipient's visits and blanks the recipient fields. A soft delete is not an erasure.
+
+## 8. Nuxt setup (example)
+
+Nuxt 4 as a Node server behind nginx on one EU VPS. SQLite through Drizzle and `better-sqlite3` (WAL, with a tested backup); Postgres only from a second instance on. `nuxt-auth-utils` with `runtimeConfig.session.name: '__Host-pitcher'`. `nodemailer` over SMTP, and Mailpit locally. Zod for the deck schema.
+
+```
+app/components/slides/          one component per slide type
+app/pages/d/[slug].vue          gate, then the deck (reveal.js, client-only)
+app/pages/present/[deck].vue    team presenter view with notes
+app/pages/login.vue, admin/     team screens (the API decides, not the page)
+server/api/d/[slug]/deck.get.ts       pinned version without notes; needs a grant
+server/api/d/[slug]/[...file].get.ts  grant check, then X-Accel-Redirect
+server/api/d/[slug]/{code,verify,start}.post.ts
+server/api/visits/[id].post.ts        cumulative ms per slide
+server/api/admin/...
+server/utils/                   db, gate, mail, limits, deck schema
+scripts/deck-publish.ts         lint and snapshot
+examples/demo-deck/deck.yml     non-confidential deck for tests
+```
+
+Tables: `users`, `decks`, `deck_versions`, `links`, `codes`, `visits`, `slide_times`, `attempts`.
 
 ## Proof
 
-Tests per piece, with a fixed clock:
+Run every test with a fixed clock; browser tests use Playwright's own headless Chromium.
 
-- A deck file or asset without a grant redirects to the gate or returns 403, also for a guessed path and `../`.
-- A revoked or expired link with an old grant shows the gate.
-- A grant for link A does not open link B; two links in one browser both stay open.
-- 5 wrong codes block; a new code does not reset the count; a code expires after 10 minutes.
-- A GET of the link creates no visit, Open creates exactly one, and a reload within 30 minutes stays the same visit.
-- A tracker event for another visit or link is refused; a replayed event counts once; durations are capped.
-- Without consent, no slide event is accepted.
-- Gated responses carry the four headers.
-- The code mail goes only to the link address; production without mail configuration fails loudly.
-- A `<script>` in a name or user agent shows as text in the admin.
-- Browser (Playwright, headless Chromium): open the demo deck, go through 3 slides, hide the tab, and see 3 slide rows with time.
+- **P1** Publish fails on an unknown type, a duplicate id, a missing `ask`, an external URL and missing alt text, and warns at 21 slides.
+- **P2** A deep link `#/team` survives the gate and opens on the team slide.
+- **P3** Keyboard only, the deck can be paged, its overview opened and closed, and its end reached; at 390 px wide it shows the scroll view.
+- **P4** Without a grant, the deck API and assets return 403 (also for a guessed path and `../`), and the page shows the gate.
+- **P5** A revoked or expired link with an old grant shows the gate; a grant for link A does not open link B; two links in one browser both stay open.
+- **P6** 5 wrong codes block; a new code does not reset the count; a code expires after 10 minutes; the 11th send of a day is refused.
+- **P7** A GET creates no visit; the gate POST creates exactly one; within 30 minutes it stays the same visit.
+- **P8** Without consent the tracker is not loaded and slide times are refused; a replayed beacon does not raise a slide time; times are capped.
+- **P9** The deck API never contains `notes`; the presenter view without a team session returns 403.
+- **P10** Gated responses carry the five headers.
+- **P11** The code mail goes only to the link address; production without mail configuration fails loudly; `<script>` in a name shows as text in the admin.
+- **P12** Erasure removes the recipient's visits; the daily job deletes data older than 12 months.
+- **P13** Browser: open the demo deck with stats, go through 3 slides, hide the tab, and the admin shows 3 slide times and the drop-off slide.
 
 ## Choices per startup
 
-- **Domain:** a subdomain of the startup's own domain (`deck.<domain>`), because recipients trust it.
+- **Domain:** `deck.<domain>`, because recipients trust it.
 - **Mail provider and sending subdomain:** see Mail.
 - **Retention** (12 months proposed) and **hosting** (an EU VPS, for example through Forge or Ploi).
-- **Existing decks:** strip their own gate and tracking code, make asset paths relative, self-host the fonts, and add `data-slide-id`.
+- **Existing decks:** rewrite them into `deck.yml`; an AI agent can do that from a PDF, with the founder checking each headline.
