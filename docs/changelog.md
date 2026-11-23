@@ -1,5 +1,9 @@
 # Changelog
 
+## 23-11-2026
+
+- MIT license added so any startup may reuse the blueprint; proof: `LICENSE`. ⇒ ALWAYS keep everything in this repo fit for public reuse.
+
 ## 17-11-2026
 
 - Plan written from four research notes and an independent review by a second AI model; proof: `docs/reports/Pitchdecks delen en volgen.md`. ⇒ ALWAYS build from `docs/plan.md`; NEVER reuse code, data or secrets from another system.

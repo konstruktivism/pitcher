@@ -17,3 +17,7 @@ Status: blueprint only; there is no code here.
 - Every byte of a deck goes through the server gate, so a deck file never sits in `public/`.
 - Code and identifiers in English; text a viewer reads follows the deck language (`nl` or `en`).
 - Each piece ships with the tests listed under "Proof" in the plan for what it touches.
+
+## License
+
+MIT, see [`LICENSE`](LICENSE): free to use, adapt and share.
