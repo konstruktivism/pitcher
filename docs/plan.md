@@ -164,9 +164,10 @@ reveal.js (MIT, version pinned) runs as a client-only component and renders the 
   - Picking a slide in the overview only previews it. The screen follows on Enter, so the founder can find an appendix slide during questions.
   - After a run, a summary of planned against spent time per slide turns every run into a rehearsal.
 - **Screen.** "Open screen" opens `/present/<deck>/screen`, a window with only the slides. On a video call, the founder shares only that window. It follows the presenter through a `BroadcastChannel`:
-  - A run has a random id and one pinned version.
-  - The screen announces itself and receives the full state: run, version, slide and blackout. Every change sends the full state again, so either window can reload and recover.
-  - The presenter sends a heartbeat every 2 seconds. After 5 seconds without an answer, the presenter shows that the screen is lost.
+  - A run has a random id, which is in both URLs, and one pinned version.
+  - The screen announces itself and receives the full state: run, version, slide and blackout. Every change sends the full state again.
+  - The presenter keeps its state in `sessionStorage` and restores it before broadcasting, so either window can reload and recover.
+  - The presenter sends a heartbeat every 2 seconds, and the screen answers each one. After 5 seconds without an answer, the presenter shows that the screen is lost.
 - **No `detail`.** Neither window shows `detail`.
 - **Why not reveal's speaker view:** its notes plugin writes inline scripts into a popup, and the CSP blocks them.
 - **Offline copy.** Before a pitch, the team saves two PDFs from `/present`: the presentation (no `detail`, no notes) and the read version (with `detail`). The team opens both once offline, checking fonts and page breaks. ⇒ ALWAYS have an offline copy ready before the pitch.
@@ -238,7 +239,7 @@ Measuring happens only with consent. Without it, the server keeps only what acce
 **Gate every byte.** The server gates everything a viewer gets: deck data, images and video.
 - `deck.get` returns the current version's id and its `viewer.json`, and needs a grant. `notes.json` goes only to a team session.
 - The file route is `/api/d/<slug>/<version>/<file>`.
-  - It serves only entries from that version's manifest, after the grant check.
+  - It serves only entries from that version's manifest, after the grant check, and only when the version belongs to the link's deck.
   - It resolves the path inside the version folder, refusing `..` and symlinks.
   - It answers with `X-Accel-Redirect` to an nginx `location` marked `internal`, and nginx handles Range requests.
 
@@ -353,7 +354,7 @@ Run every test with a fixed clock (Playwright's `page.clock` in the browser). Br
   - No slide of the demo deck overflows its canvas, in the presenter (1280×720) or in the link (1280×900).
 - **P4** Gating:
   - Without a grant, the deck API and the assets return 403, also for a guessed path, `../` and a symlink.
-  - With a valid grant, `deck.yml`, `notes.json` and a file outside the manifest still return 403.
+  - With a valid grant, `deck.yml`, `notes.json`, a file outside the manifest and a version of another deck still return 403.
   - The deck API and the link's PDF contain no notes.
   - A direct request to the internal nginx location fails.
   - A Range request on a video works.
@@ -383,7 +384,7 @@ Run every test with a fixed clock (Playwright's `page.clock` in the browser). Br
 - **P10** Headers and CSP:
   - Gated responses carry the four headers and the CSP.
   - Presenting, the screen window, the read layout and the print view work under the enforced CSP.
-  - An external script or fetch is blocked.
+  - A script without a nonce and a cross-origin fetch are blocked, while Nuxt's lazy-loaded chunks work.
 - **P11** Mail:
   - The code mail goes only to the link address.
   - Production without mail configuration fails loudly.

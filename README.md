@@ -1,6 +1,6 @@
 # Pitcher
 
-A blueprint for a good pitch-deck builder: write a deck as typed slides that follow proven pitch rules, present it live with a presenter view, share it through a personal or public link that reads well alone, and, with the viewer's consent, see per slide what was read. A startup builds it as its own standalone app. Maintained by Konstruktiv.
+A blueprint for a good pitch-deck builder: write a deck as typed slides that follow research-informed pitch guidelines, present it live with a presenter view, share it through a personal or public link that reads well alone, and, with the viewer's consent, see per slide what was read. A startup builds it as its own standalone app. Maintained by Konstruktiv.
 
 Status: blueprint only; there is no code here.
 

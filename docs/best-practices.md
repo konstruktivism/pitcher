@@ -6,7 +6,7 @@ These rules are for whoever writes a deck: a founder, or an AI agent that drafts
 - **standard** means WCAG;
 - **own rule** means a choice of this blueprint, without direct support from a source.
 
-The rules are defaults, not laws: a deck may break one for a reason. The tool checks what it can (see [What publish checks](#what-publish-checks)); the rest is for a person to judge.
+The rules are defaults: a deck may break one for a reason, but not a check that fails publish. The tool checks what it can (see [What publish checks](#what-publish-checks)); the rest is for a person to judge.
 
 ## Story
 
@@ -66,21 +66,7 @@ The rules are defaults, not laws: a deck may break one for a reason. The tool ch
 
 ## What publish checks
 
-| Rule | Check |
-|---|---|
-| 2 | Warns on a headline that is only a label, or over 12 words |
-| 3, 14 | Warns above 30 words presented or 80 in `detail` |
-| 4 | Fails when the outline's required types are missing |
-| 6 | Fails on an investor `ask` without amount, use of funds or milestones; warns without runway |
-| 7 | Fails on a chart without unit, period or source; warns on a `cumulative` chart |
-| 9 | Fails on `market` without sources |
-| 12 | Warns above 20 slides |
-| 16 | Warns when `seconds` add up past `minutes` |
-| 17, 19 | Fixed in the components |
-| 18 | Fails on a theme colour below 4.5:1 |
-| 20 | Fails on an image without alt text |
-
-Publish also prints the headline outline. Whether the claims are true, the market is real and the story is clear stays for a person to judge.
+Publish checks rules 2, 3, 4, 6, 7, 9, 12, 14, 16, 18 and 20; the components enforce 17 and 19. The plan's [Publish](plan.md#publish) section holds the exact checks and decides which ones fail and which only warn. Publish also prints the headline outline. Whether the claims are true, the market is real and the story is clear stays for a person to judge.
 
 ## Sources
 
