@@ -1,6 +1,6 @@
 ---
-Datum: 2026-11-24
-Status: Concept
+Date: 2026-11-24
+Status: Draft
 ---
 
 # Plan
