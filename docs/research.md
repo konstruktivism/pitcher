@@ -48,6 +48,8 @@ Use 16 random bytes (128 bits) from a CSPRNG, base64url-encoded, never sequentia
 
 ## Conclusion
 
+*Since settled in the plan:* the code mail goes only to the address on the link; nothing is logged per viewer without consent; the mail provider is a choice per startup; erasure is a hard delete.
+
 The three hard choices (typed code, no pixel in mail, consent-gated timing) all push the same way: the gate page, not the mail or the HTTP request, is the single place where identity, consent and the first trusted interaction meet, and a "view" is a derived, qualified record rather than a logged event. That is also where this tool can beat the incumbents, since Papermark's HTML path tracks one page and its documented bot filter stops at user agents.
 
 Four decisions remain with the owner: whether recipients may type any address or only invited ones, consent versus legitimate interest for reading time (ideally confirmed by a privacy lawyer or the AP, together with whether a per-recipient URL counts as a "tracking link"), the mail provider, and an explicit anonymise-then-delete routine that reconciles a soft-delete policy with erasure. Untested assumptions are the 3-second interaction gate, the Chrome-only beacon figure on iOS Safari, and scanner JavaScript execution; a Microsoft 365 test tenant with Safe Links on settles the last two.

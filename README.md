@@ -1,6 +1,6 @@
 # Pitcher
 
-A blueprint for a good pitch-deck builder: write a deck as typed slides, present it with proper navigation, share it through a personal or public link, and see per slide what was read. A startup builds it as its own standalone app. Maintained by Konstruktiv.
+A blueprint for a good pitch-deck builder: write a deck as typed slides that follow proven pitch rules, present it live with a presenter view, share it through a personal or public link that reads well alone, and, with the viewer's consent, see per slide what was read. A startup builds it as its own standalone app. Maintained by Konstruktiv.
 
 Status: blueprint only; there is no code here.
 
@@ -8,7 +8,8 @@ Status: blueprint only; there is no code here.
 
 1. [`docs/plan.md`](docs/plan.md): the deck format, runtime, sharing, measuring, the Nuxt setup and the numbered proofs.
 2. [`docs/todo.md`](docs/todo.md): the build order; each step names the proofs it must pass.
-3. [`docs/research.md`](docs/research.md): background and sources. Where it differs from the plan, the plan wins.
+3. [`docs/best-practices.md`](docs/best-practices.md): the rules for a good pitch, with sources, and which of them publish checks. Also the brief for anyone, human or AI, who writes a deck.
+4. [`docs/research.md`](docs/research.md): background and sources. Where it differs from the plan, the plan wins.
 
 ## Rules for every builder, human or agent
 
