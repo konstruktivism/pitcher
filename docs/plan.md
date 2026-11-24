@@ -5,11 +5,11 @@ Status: Draft
 
 # Plan
 
-A founder writes a deck from typed slides, presents it live, and sends a personal link to each investor, customer or partner. One source serves both uses: the deck presents well and also reads well alone. With the viewer's consent, the founder later sees per slide what was read and where the reader stopped. There is no editor UI in v1: a deck is one file that a person or an AI agent writes, and publishing checks it. The rules for a good pitch are in [best practices](best-practices.md), and the background is in [research](research.md).
+A founder writes a deck as typed slides, presents it, and sends each recipient a personal link. One source serves presenting and reading. With consent: time per slide and drop-off. No editor in v1; publish checks the file. See [best practices](best-practices.md) and [research](research.md).
 
 ## 1. Deck
 
-A deck is a folder in `DECKS_DIR`. It holds `deck.yml`, plus images, videos and self-hosted fonts.
+A folder in `DECKS_DIR`: `deck.yml`, images, videos, fonts.
 
 ```yaml
 title: Acme
@@ -40,291 +40,221 @@ slides:
 
 ### Schema
 
-The schema is strict: a field it does not know fails publish, which catches typos from people and agents alike. Text fields allow Markdown emphasis, plus links to the deck's own slides (`#/`), to `https:` pages and to `mailto:`. Raw HTML is never rendered.
-
-**Every slide:**
+Strict: unknown fields fail. Text allows Markdown emphasis and links to `#/`, `https:` and `mailto:`. Never raw HTML.
 
 | Field | Type | Rule |
 |---|---|---|
-| `type` | one of the types below | Required |
-| `id` | kebab-case | Defaults to the type, and is required when a type repeats. It is the deep link (`#/problem`) and the tracking key, so a published id never changes |
-| `headline` | text | Required. It states the claim as a sentence, so that the headlines read in a row tell the whole story |
-| `detail` | text | Shows only when the deck is read alone, never while presenting |
-| `sources` | list of text | Shown in small type. Required on `market` |
-| `seconds` | whole number > 0 | The planned speaking time |
-| `notes` | text | For the team only |
-
-**Blocks**, which each type allows as listed in its table:
+| `type` | slide type | Required |
+| `id` | kebab-case | Defaults to the type; required when a type repeats. Deep link and tracking key; never changes after publish |
+| `headline` | text | Required. The claim, as a sentence |
+| `detail` | text | Shown only when read alone |
+| `sources` | list of text | Required on `market` |
+| `seconds` | integer > 0 | Planned speaking time |
+| `notes` | text | Team only |
 
 | Block | Type |
 |---|---|
-| `points` | 1–5 lines of text |
-| `figures` | 1–4 of `{label, value, note?}`, all text; `value` as shown, such as "EUR 1.5m" or "42%" |
-| `chart` | `{kind: bar\|line, unit, period, source, points, cumulative?, highlight?}`, where `points` is 2–24 of `{label, value: number, forecast?: true}` and `highlight` names one label |
-| `image` | `{src, alt}`, where `src` is a file in the folder |
-| `video` | `{src, poster, captions?}`: an MP4, a poster image and a WebVTT file |
-| `people` | 1–6 of `{name, role, proof, photo?}`, where `photo` is an `image` |
-
-**Slide types**, in the investor order: Sequoia's outline, with YC's traction and ask.
+| `points` | 1–5 lines |
+| `figures` | 1–4 × `{label, value, note?}`, all text ("EUR 1.5m") |
+| `chart` | `{kind: bar\|line, unit, period, source, points, cumulative?, highlight?}`; `points` is 2–24 × `{label, value: number, forecast?}` |
+| `image` | `{src, alt}`; `src` is a file in the folder |
+| `video` | `{src, poster, captions?}`: MP4, image, WebVTT |
+| `people` | 1–6 × `{name, role, proof, photo?}` |
 
 | Type | Purpose | Blocks |
 |---|---|---|
-| `title` | The company in one sentence | `image` (logo) |
-| `problem` | Whose pain it is, and how they cope today | `points` |
-| `solution` | The insight, shown as one visual | `image` or `points` |
-| `why-now` | The change that makes it possible now | `points` |
-| `product` | How it works, in three steps | `points`, `image` or `video` |
-| `traction` | The proof, with the conclusion as the headline | `chart` or `figures` |
-| `market` | Who buys, sized bottom-up | `figures` |
-| `business-model` | How you earn money, and the unit economics | `figures` |
-| `competition` | The alternatives, and the gap each one leaves | `points` |
+| `title` | The company in one sentence | `image` |
+| `problem` | Whose pain; how they cope now | `points` |
+| `solution` | The insight, as one visual | `image` or `points` |
+| `why-now` | What changed | `points` |
+| `product` | How it works, in 3 steps | `points`, `image` or `video` |
+| `traction` | Proof | `chart` or `figures` |
+| `market` | Who buys, bottom-up | `figures` |
+| `business-model` | Revenue and unit economics | `figures` |
+| `competition` | Alternatives and their gaps | `points` |
 | `team` | Why these people | `people` |
-| `financials` | Key metrics, the plan and the burn | `chart` or `figures` |
-| `ask` | What you ask, what it buys, and a vision line | `amount` (text), `use_of_funds` (figures), `milestones` (points), `runway` (text), `next_step` (text) |
-| `appendix` | Risks and details, after the ask | any block |
+| `financials` | Metrics, plan, burn | `chart` or `figures` |
+| `ask` | The ask, what it buys, a vision line | `amount`, `use_of_funds` (figures), `milestones` (points), `runway`, `next_step` |
+| `appendix` | Risks, details | any |
 
-**Outlines.**
-- `investor` is the default. It requires `title`, `problem`, `solution`, `team` and `ask`, and its `ask` needs `amount`, `use_of_funds` and `milestones`.
-- `sales` is for a customer or partner. It uses the same types in this order:
-  1. `title`
-  2. `why-now`: the change in their world
-  3. `problem`: what is at stake for them
-  4. `solution`: the future they can reach
-  5. `product`: how you get them there
-  6. `traction`: proof from customers like them
-  7. `ask`: one next step
-
-  It requires `why-now`, `problem`, `solution`, `traction` and `ask`, and its `ask` needs `next_step`. The five moves before the ask follow Raskin's strategic narrative; the closing next step is this blueprint's own addition.
+**Outlines**
+- `investor` (default, order above): requires `title`, `problem`, `solution`, `team`, and an `ask` with `amount`, `use_of_funds` and `milestones`.
+- `sales` (Raskin's strategic narrative): `title`, `why-now` (the change), `problem` (the stakes), `solution` (the future), `product` (how), `traction` (proof), `ask` (`next_step`). Requires all but `title` and `product`.
 
 ### Design
 
-- Each type is one Vue component, so the design is fixed.
-- Text is large: on the 1280×720 canvas, headlines are at least 48 px and body text at least 28 px.
-- A chart shows one message. The `highlight` is in the theme colour and the rest is grey, and values carry labels as well as colour.
-- There are no animations, fragments or transitions, so a slide means the same presented, read and printed.
+- One Vue component per type; the design is fixed.
+- On the 1280×720 canvas: headlines ≥ 48 px, body ≥ 28 px.
+- Charts: `highlight` in the theme colour, the rest grey, values labelled.
+- No animations, fragments or transitions.
 
 ### Publish
 
-`deck:publish <folder>` is the quality gate. This section is the normative list; [best practices](best-practices.md) maps its rules to these checks.
+`deck:publish <folder>`. This list is normative.
 
-**It fails on:**
-- invalid YAML or an unknown field;
-- an unknown type, or a duplicate id;
-- a type that the outline requires but the deck lacks;
-- a chart without `unit`, `period` or `source`, or a `market` slide without `sources`;
-- an investor `ask` without `amount`, `use_of_funds` or `milestones`, or a sales `ask` without `next_step`;
-- an asset (image, video or font) that is outside the folder or missing from it;
-- a link that is not `#/`, `https:` or `mailto:`;
+Fails on:
+- invalid YAML, an unknown field or type, a duplicate id;
+- a type the outline requires but the deck lacks;
+- a chart without `unit`, `period` or `source`; `market` without `sources`;
+- an investor `ask` without `amount`, `use_of_funds` or `milestones`; a sales `ask` without `next_step`;
+- an asset outside or missing from the folder;
+- a link other than `#/`, `https:` or `mailto:`;
 - an image without alt text;
-- a theme colour below 4.5:1 contrast against the background.
+- a theme colour below 4.5:1 contrast.
 
-**It warns on:**
-- more than 20 slides;
-- more than 3 points;
-- more than 30 words presented on a slide, or more than 80 words in `detail`;
-- a headline over 12 words, or a headline that is only a label (a single word, or the type name);
-- a `cumulative` chart;
-- a `video` without `captions`;
-- an investor `ask` without `runway`;
-- a sum of `seconds` above `minutes` × 60.
+Warns on:
+- more than 20 slides or 3 points;
+- more than 30 words presented, or 80 in `detail`;
+- a headline over 12 words, or a bare label;
+- a `cumulative` chart, a `video` without captions, an investor `ask` without `runway`;
+- `seconds` summing above `minutes` × 60.
 
-**It prints** the headlines in order, so the founder reads the story in a dozen lines before sharing it.
+Prints the headlines in order.
 
-**It stores** a version:
-- The version is written to `versions/<content hash>/` and never changes afterwards.
-- The folder holds `viewer.json` (everything except `notes`), `notes.json` (team only), and the assets listed in a manifest. `deck.yml` never enters the version store.
-- Once the files are in place, one transaction sets the deck's current version.
-- Every link then shows the new version.
-- Deck data, asset URLs and views all carry the version id. An open view keeps its version until the page reloads, and stats add up per slide id across versions.
+Stores an immutable `versions/<content hash>/`: `viewer.json` (no notes), `notes.json` (team), the assets and a manifest. Never `deck.yml`. One transaction then makes it the deck's current version, and every link shows it. Data, asset URLs and views carry the version id. An open view keeps its version until reload. Stats add up per slide id across versions.
 
-## 2. Runtime and navigation
+## 2. Runtime
 
-reveal.js (MIT, version pinned) runs as a client-only component and renders the slide components into `<section id="<slide id>">`.
+reveal.js (MIT, pinned version), client-only. Each slide is a `<section id="<slide id>">`.
 
-**Settings:**
-- linear slides, with `hash: true`;
-- a progress bar and the slide number;
-- `controlsLayout: 'edges'`;
-- the overview (`O`/`Esc`) and blackout (`B`);
-- `transition: 'none'`;
-- `scrollActivationWidth: null`, because phones get the read layout below instead of reveal's scroll view.
+Settings: `hash: true`, progress bar, slide number, `controlsLayout: 'edges'`, overview (`O`), blackout (`B`), `transition: 'none'`, `scrollActivationWidth: null`.
 
-**Viewers get:**
-- Arrow keys, Space, Home and End; swipe on touch; click zones at the edges.
-- A deep link per slide, a progress bar and a counter.
-- On a wide screen, the link uses a 1280×900 canvas: the slide on top, with `detail` in a strip below it.
-- Below 640 px wide, the link shows the **read layout** instead of reveal: the same components as a responsive document, with body text of at least 16 px and `detail` under each slide. A deep link scrolls to its slide. reveal scales its canvas, so its own scroll view would shrink 28 px text to about 9 px on a phone.
-- A screen-reader announcement of the current slide.
+Viewers:
+- Keys, swipe, edge click zones, deep links, progress, counter, screen-reader announcement.
+- From 640 px: a 1280×900 canvas, with `detail` in a strip under the slide.
+- Below 640 px: a read layout instead of reveal. Same components as a responsive document, body ≥ 16 px, `detail` under each slide. reveal's own scroll view would scale 28 px text down to about 9 px.
 
-**Present.** The team presents from `/present/<deck>`, which needs a team session.
-- **It shows** the current and the next slide, the speaker notes, the elapsed and remaining time, and per slide the planned time against the time spent.
-- **Controls:**
-  - A presenter clicker works, because it sends PageUp/PageDown or the arrow keys.
-  - The timer can start, pause and reset.
-  - Picking a slide in the overview only previews it. The screen follows on Enter, so the founder can find an appendix slide during questions.
-  - After a run, a summary of planned against spent time per slide turns every run into a rehearsal.
-- **Screen.** "Open screen" opens `/present/<deck>/screen`, a window with only the slides. On a video call, the founder shares only that window. It follows the presenter through a `BroadcastChannel`:
-  - A run has a random id, which is in both URLs, and one pinned version.
-  - The screen announces itself and receives the full state: run, version, slide and blackout. Every change sends the full state again.
-  - The presenter keeps its state in `sessionStorage` and restores it before broadcasting, so either window can reload and recover.
-  - The presenter sends a heartbeat every 2 seconds, and the screen answers each one. After 5 seconds without an answer, the presenter shows that the screen is lost.
-- **No `detail`.** Neither window shows `detail`.
-- **Why not reveal's speaker view:** its notes plugin writes inline scripts into a popup, and the CSP blocks them.
-- **Offline copy.** Before a pitch, the team saves two PDFs from `/present`: the presentation (no `detail`, no notes) and the read version (with `detail`). The team opens both once offline, checking fonts and page breaks. ⇒ ALWAYS have an offline copy ready before the pitch.
+**Present** at `/present/<deck>` (team only):
+- Current and next slide, notes, elapsed and remaining time, planned vs spent time per slide.
+- Clicker (PageUp/PageDown, arrows). Timer start, pause, reset.
+- The overview previews a slide; Enter puts it on screen.
+- After a run: planned vs spent per slide.
+- `/present/<deck>/screen` shows only the slides; share this window on a video call. It syncs over `BroadcastChannel`:
+  - the run id is in both URLs, with one pinned version;
+  - the screen announces itself and gets the full state (run, version, slide, blackout); every change resends it;
+  - the presenter keeps its state in `sessionStorage` and restores it before broadcasting;
+  - a heartbeat every 2 s gets an answer; after 5 s without one, the presenter shows the screen as lost.
+- Neither window shows `detail`.
+- reveal's speaker view is not used: its popup runs inline scripts that the CSP blocks.
+- Before a pitch, save two PDFs (the presentation, and the read version with `detail`) and open both offline once. ⇒ ALWAYS have an offline copy.
 
-**PDF.** When a link has `allow_pdf`, a button opens reveal's print view (`view: 'print'`). The print view opens only after the gate, once all assets have loaded. The PDF contains `detail` but never notes. ⇒ NEVER promise that a viewer cannot keep a copy: whatever the browser shows can be saved.
+**PDF:** with `allow_pdf`, a button opens `view: 'print'` after the gate, once assets have loaded. It includes `detail`, never notes. ⇒ NEVER promise copy protection.
 
 ## 3. Share
 
-**Link modes.**
-- `open` is the default: a personal link whose only gate is the consent choice.
-- `code` is for confidential material. A 6-digit code is mailed to the address on the link. The page shows a masked hint of that address, plus "Not you? Ask the sender for your own link".
-- A link without a recipient is a broadcast, and is always `open`.
+**Links**
+- `open` (default): the only gate is the consent choice.
+- `code`: a 6-digit code goes to the link's address. The page shows a masked hint and "Not you? Ask the sender for your own link".
+- A link without a recipient is a broadcast, always `open`.
+- Slug: ≥ 128 random bits. Fields: recipient, `internal`, `allow_pdf` (off), expiry.
+- One active link per recipient per deck: a unique index on deck + normalised address (trimmed, lower case), over links not revoked or archived.
+- Revoke, archive, replace; never hard-delete.
+- A revoked, expired or archived link gives no code, no verification, no grant and no content. Page: "This link is no longer active. Ask the sender for a new one."
 
-**Links.**
-- A link has a random slug of at least 128 bits and optionally a recipient, which `code` requires.
-- It also carries an `internal` flag, `allow_pdf` (off by default) and an optional expiry.
-- Each recipient has one active link per deck. This is enforced by a unique index on the deck and the normalised address (trimmed, lower case) over links that are neither revoked nor archived.
-- A link can be revoked, archived or replaced, but never hard-deleted.
-- A revoked, expired or archived link refuses code sends, verification, new grants and content. Its page says "This link is no longer active. Ask the sender for a new one."
+**Gate and grants**
+- First open per browser: two equal buttons, "Open with reading stats" and "Open without".
+- A grant is a database row. A sealed `__Host-` cookie holds only grant ids (Secure, HttpOnly, SameSite=Lax, ≤ 20 grants, 30 days). The server checks the row on every request, so revocation and withdrawn consent beat an old cookie.
+- Consent lives on the grant; the viewer can change it from the deck.
+- A valid grant skips the code. Links don't log each other out.
+- Every POST checks `Origin`.
 
-**Gate and grants.**
-- The first open of a link in a browser shows two equal buttons: "Open with reading stats" and "Open without".
-- A grant is a database row, and the sealed `__Host-` cookie only holds grant ids: Secure, HttpOnly, SameSite=Lax, at most 20 grants, 30 days each. The server checks the row on every request, so revoking a grant or withdrawing consent holds even against a restored old cookie.
-- The consent choice lives on the grant, and the viewer can change it from the deck at any time.
-- A valid grant skips the code step.
-- Opening a second link never logs out the first.
-- Every POST checks that `Origin` is the app's own origin.
+**Admin** (team; publishing stays a command)
+- Decks: current version, publish date.
+- Deck: versions, links, time and drop-off per slide.
+- New link: recipient, mode, expiry, `internal`, `allow_pdf`.
+- Link: copy invite, revoke, archive, replace.
+- Recipient: links by address, sessions, slide times, erase.
 
-**Admin**, for the team only. Publishing stays a command.
-- **Decks:** a list with each deck's current version and publish date.
-- **Deck:** its versions and links, and time and drop-off per slide.
-- **New link:** recipient (optional), mode, expiry, `internal` and `allow_pdf`.
-- **Link actions:** copy invite, revoke, archive and replace.
-- **Recipient:** their links grouped by address, sessions and slide times, and erasure.
-
-**Copy invite** gives the link plus one sentence in the deck language, and the founder sends it from their own mailbox. ⇒ ALWAYS a link generated by the system, NEVER one typed by a person or an AI.
+**Copy invite:** the link plus one sentence in the deck language; the founder sends it. ⇒ ALWAYS a system-generated link.
 
 ## 4. Measure
 
-Measuring happens only with consent. Without it, the server keeps only what access needs: the grant and the limit counters. There is no view, no slide time and no alert.
+Only with consent. Without it, only the grant and the limit counters exist: no view, no time, no alert.
 
-- **View.**
-  - With consent, each page load creates its own view through `start.post`, which returns the view id. Every tab therefore has its own view.
-  - A GET never counts, because mail scanners and link previews fetch links.
-  - The server binds each view to its grant.
-- **Tracker.** It loads only on a view with consent and counts visible time per slide id (Page Visibility API). In the read layout, the visible slide is the section most in view (IntersectionObserver). It pauses after 60 seconds without input, unless a video is playing.
-  - It sends through `sendBeacon` every 10 seconds, on each slide change, and on `visibilitychange: hidden`.
-  - Each beacon carries the view id, the **cumulative** milliseconds per slide, and the furthest slide reached.
-- **Server.**
-  - A beacon is accepted only when the view's grant is in the request's cookie, that grant is active with consent, the link is active and the view is open.
-  - The server takes link, viewer and version from the view, never from the body. It refuses unknown slide ids and values that are negative or not whole numbers.
-  - It processes each beacon in one transaction and keeps the maximum per slide.
-  - A view's total may not exceed the time since `started_at` plus one tolerance of 2 seconds. The excess is dropped, so late, replayed, forged or rapid-fire beacons cannot inflate the times.
-- **Withdrawal.** Withdrawing consent sets the grant's consent to off and closes its open views. Consenting again starts a new view.
-- **Excluded.** Views from known bot user agents are flagged, kept, and left out of totals and alerts. Team sessions and `internal` links never count.
-- **Stats** per link and per recipient:
-  - **Sessions:** a grant's views form one session until 30 minutes pass without an accepted beacon.
-  - **Time per slide**, and the furthest slide reached (the drop-off).
-  - **Browsers:** the grants with consent. Also the device class.
-
-  The admin labels every number as an estimate, and browsers as browsers, not people.
-- **Alert** to the link's creator. At most one alert goes out per view, recorded on the view. It is sent:
-  - on the first view of a link;
-  - on the first view of a new session;
-  - on the first view of a new browser, meaning a grant's first view while the link already has an earlier grant with views. The link may have been forwarded, or the cookies cleared.
+- **View:** one per page load, so one per tab, created by `start.post` and bound to the grant. A GET never counts: scanners and link previews fetch links.
+- **Tracker:** visible time per slide (Page Visibility API; IntersectionObserver in the read layout). Pauses after 60 s idle unless a video plays. `sendBeacon` every 10 s, on slide change and on hide, with the view id, cumulative ms per slide and the furthest slide.
+- **Server:**
+  - accepts a beacon only if the view's grant is in the cookie, the grant is active with consent, the link is active and the view is open;
+  - takes link, viewer and version from the view, never from the body;
+  - refuses unknown slide ids and negative or fractional values;
+  - processes each beacon in one transaction and keeps the max per slide;
+  - caps a view's total at the time since `started_at` + 2 s, and drops the excess.
+- **Withdrawal:** consent off, open views closed. Consenting again starts a new view.
+- **Not counted:** bot user agents (flagged and kept), team sessions, `internal` links.
+- **Stats** per link and recipient: sessions (a grant's views until 30 min pass without a beacon), time per slide, furthest slide, browsers (grants with consent), device class. Labelled as estimates; browsers are not people.
+- **Alert** to the link's creator, at most one per view: on the first view of the link, of a new session, or of a new browser (a grant's first view while an earlier grant has views: forwarded, or cookies cleared).
 
 ## 5. Security
 
-**Gate every byte.** The server gates everything a viewer gets: deck data, images and video.
-- `deck.get` returns the current version's id and its `viewer.json`, and needs a grant. `notes.json` goes only to a team session.
-- The file route is `/api/d/<slug>/<version>/<file>`.
-  - It serves only entries from that version's manifest, after the grant check, and only when the version belongs to the link's deck.
-  - It resolves the path inside the version folder, refusing `..` and symlinks.
-  - It answers with `X-Accel-Redirect` to an nginx `location` marked `internal`, and nginx handles Range requests.
-
-⇒ NEVER put deck files in `public/`; NEVER use a client-side overlay as the gate.
-
-**Headers.**
-- Gated responses carry `Cache-Control: no-store`, `Vary: Cookie`, `Referrer-Policy: no-referrer` and `X-Robots-Tag: noindex`.
-- Every page, the admin included, gets this CSP through `nuxt-security`:
+- The server gates every byte: deck data, images, video.
+- `deck.get` returns the current version id and `viewer.json`, and needs a grant. `notes.json` is team only.
+- Files at `/api/d/<slug>/<version>/<file>`:
+  - manifest entries only;
+  - the version must belong to the link's deck;
+  - the path resolves inside the version folder (no `..`, no symlinks);
+  - then `X-Accel-Redirect` to an nginx `internal` location, which handles Range.
+- ⇒ NEVER deck files in `public/`; NEVER a client-side overlay as the gate.
+- Gated responses: `Cache-Control: no-store`, `Vary: Cookie`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`.
+- CSP on every page, via `nuxt-security`:
 
   ```
   default-src 'none'; script-src 'self' 'nonce-{{nonce}}' 'strict-dynamic'; style-src 'self' 'unsafe-inline';
   img-src 'self'; font-src 'self'; media-src 'self'; connect-src 'self';
   frame-ancestors 'none'; base-uri 'none'; form-action 'self'
   ```
-- The gate page of a `code` link uses a neutral `og:title`.
+- The gate page of a `code` link has a neutral `og:title`.
+- Codes: CSPRNG, 6 digits, 10 minutes, single use, hashed, consumed atomically. Bound to their purpose and link or account; a new code replaces the old.
+- Limits, for viewer and team codes alike:
+  - 5 wrong tries per link or account per 15 min, not reset by a new code;
+  - sends: 3 per 15 min and 10 per day per recipient, 20 per hour per IP.
 
-**Codes.**
-- Codes come from a CSPRNG: 6 digits, valid 10 minutes, single use, stored hashed, and consumed atomically.
-- A code is bound to its purpose and to its link (viewer) or account (team), and a new code replaces the previous one.
-- Limits apply to both flows:
-  - at most 5 wrong tries per link or account per 15 minutes, and a new code does not reset the count;
-  - at most 3 sends per 15 minutes and 10 per day per recipient, and 20 per hour per IP.
-- Counters live in the database, keyed by hash. They update atomically and expire with their window.
-
-**Team.**
-- Team login works by email code from an allow-list, bound to the purpose `team`.
-- Every admin API and `/present` require an active team user, and a viewer grant never opens them.
-- Escape everything the admin renders.
+  Counters are database rows keyed by hash, updated atomically, expiring with their window.
+- Team login: an email code, an allow-list, purpose `team`. Admin APIs and `/present` need an active team user; a viewer grant never opens them. Escape all admin output.
 
 ## 6. Mail
 
-- The app sends three mails: the access code (only to the address on the link), the team login code, and the visit alert.
-- Send from a subdomain with SPF, DKIM and DMARC, through a provider that keeps data in the EU. Examples are Mailcoach, Scaleway TEM, Lettermint, Mailgun EU, or the SMTP of a Dutch host such as TransIP.
-- Turn click and open tracking off. Include a plain-text part, no remote images, and a monitored Reply-To.
-- The mail carries a code, not a magic link, because scanners open links before people do.
-- Missing mail configuration in production is an error, never a console log of the code. User text in a mail is escaped.
+- Three mails: the access code (only to the link's address), the team code, the visit alert.
+- A sending subdomain with SPF, DKIM and DMARC. An EU provider, such as Mailcoach, Scaleway TEM, Lettermint, Mailgun EU or TransIP SMTP.
+- No click or open tracking, no remote images. A plain-text part, and a monitored Reply-To.
+- Codes, not magic links: scanners open links first.
+- Missing mail config in production is an error. Escape user text.
 
 ## 7. Privacy (NL)
 
-- **Gate text.** The gate says:
-  - who is responsible;
-  - what is logged with stats and without;
-  - why, and for how long;
-  - the viewer's rights and the contact address.
-
-  It links to the privacy page.
-- **Consent.** Measuring per viewer needs consent (see Measure), and withdrawing it stops measuring at once. This is a conservative reading of EDPB 2/2023, not legal advice; there is no ruling on deck tracking.
-- **No IP.**
-  - No IP address is stored, except as an expiring hash in a limit counter.
-  - The user agent becomes a device class and a bot flag on arrival.
-  - Access, app and error logs hold no IP address, slug, email address or code. nginx keeps no access log for `/d/` and `/api/`.
-- **Retention.**
-  - Views and slide times are kept 12 months, then a daily job deletes them. The same job deletes used and expired codes and expired counters.
-  - Logs and backups rotate within 30 days.
-  - The mail provider's log retention is set to its shortest option.
-- **Erasure.** It revokes the recipient's links and grants and deletes their codes, views and slide times; then it blanks the recipient fields. A soft delete is not an erasure.
+- The gate text names: the controller, what is logged with and without stats, the purpose, retention, rights and contact. It links to the privacy page.
+- Measuring per viewer needs consent; withdrawal stops it. This is a conservative reading of EDPB 2/2023, not legal advice.
+- No IP addresses, except an expiring hash in limit counters. The user agent becomes a device class and a bot flag. No IP, slug, email address or code in any log; no nginx access log for `/d/` and `/api/`.
+- Retention:
+  - views and slide times: 12 months;
+  - a daily job deletes those, plus used or expired codes and counters;
+  - logs and backups rotate within 30 days;
+  - the mail provider keeps logs as briefly as it allows.
+- Erasure: revoke the recipient's links and grants; delete their codes, views and slide times; blank the recipient fields. A soft delete is not an erasure.
 
 ## 8. Nuxt setup (example)
 
-**Stack:**
-- Nuxt 4 as a Node server behind nginx, on one EU VPS.
-- SQLite through Drizzle and `better-sqlite3`, with WAL and a tested backup. Move to Postgres only from a second instance on.
-- `nuxt-auth-utils`, with `runtimeConfig.session.name: '__Host-pitcher'`.
-- `nuxt-security` for the headers.
-- `nodemailer` over SMTP, with Mailpit locally.
-- Zod for the deck schema.
+- Nuxt 4 (Node) behind nginx, on one EU VPS.
+- SQLite via Drizzle and `better-sqlite3`, with WAL and tested backups. Postgres only once there is a second instance.
+- `nuxt-auth-utils` (`runtimeConfig.session.name: '__Host-pitcher'`), `nuxt-security`, `nodemailer` (Mailpit locally), Zod.
 
 ```
 app/components/slides/                  one component per slide type
 app/pages/d/[slug].vue                  gate, then the deck or the read layout
-app/pages/present/[deck]/index.vue      presenter: notes, next slide, timer
-app/pages/present/[deck]/screen.vue     audience window, follows the presenter
-app/pages/login.vue, admin/             team screens (the API decides, not the page)
+app/pages/present/[deck]/index.vue      presenter
+app/pages/present/[deck]/screen.vue     audience window
+app/pages/login.vue, admin/             team screens; the API decides access
 server/api/d/[slug]/deck.get.ts         version id and viewer.json; needs a grant
-server/api/d/[slug]/[version]/[...file].get.ts   manifest and grant check, then X-Accel-Redirect
+server/api/d/[slug]/[version]/[...file].get.ts   manifest and grant check, X-Accel-Redirect
 server/api/d/[slug]/{code,verify,start,consent}.post.ts
-server/api/views/[id].post.ts           beacon: cumulative ms per slide
+server/api/views/[id].post.ts           beacon
 server/api/present/[deck].get.ts        viewer.json and notes.json; team only
 server/api/admin/...
 server/utils/                           db, gate, mail, limits, deck schema
-scripts/deck-publish.ts                 lint, headline outline and snapshot
-examples/demo-deck/deck.yml             non-confidential deck for tests
+scripts/deck-publish.ts                 lint, headline outline, snapshot
+examples/demo-deck/deck.yml             non-confidential demo deck
 ```
 
-**Tables.** `→` marks a foreign key, and `?` a nullable column.
+`→` marks a foreign key, and `?` a nullable column.
 
 | Table | Columns |
 |---|---|
@@ -340,70 +270,63 @@ examples/demo-deck/deck.yml             non-confidential deck for tests
 
 ## Proof
 
-Run every test with a fixed clock (Playwright's `page.clock` in the browser). Browser tests use Playwright's own headless Chromium.
+Use a fixed clock (`page.clock` in the browser) and Playwright's own headless Chromium.
 
-- **P1** Publish:
-  - Fails on an unknown type, an unknown field, a duplicate id, a missing `ask`, a chart without a source, an asset from outside the folder, a `javascript:` link, missing alt text, and a low-contrast theme colour.
-  - Warns at 21 slides, on a label headline, and when `seconds` exceed `minutes` × 60.
-  - Prints the headline outline.
-  - The version folder holds no `deck.yml`, and `viewer.json` holds no notes.
-- **P2** A deep link `#/team` survives the gate and opens on the team slide, in the deck and in the read layout.
-- **P3** Navigation and layout:
-  - Using only the keyboard, the deck can be paged, its overview opened and closed, blackout used, and its end reached.
-  - At 320–430 px wide, the link shows the read layout: body text of at least 16 px, `detail` visible, and no horizontal scroll at 200% text zoom.
-  - No slide of the demo deck overflows its canvas, in the presenter (1280×720) or in the link (1280×900).
-- **P4** Gating:
-  - Without a grant, the deck API and the assets return 403, also for a guessed path, `../` and a symlink.
-  - With a valid grant, `deck.yml`, `notes.json`, a file outside the manifest and a version of another deck still return 403.
-  - The deck API and the link's PDF contain no notes.
-  - A direct request to the internal nginx location fails.
-  - A Range request on a video works.
-- **P5** Links and grants:
-  - A revoked, expired or archived link refuses code sends, verification, new grants and content, also with an old grant.
-  - A grant for link A does not open link B.
-  - Two links in one browser both stay open.
-  - A POST from another origin is refused.
-- **P6** Codes, for both the viewer code and the team code:
-  - 5 wrong codes block, and a new code does not reset the count.
-  - A new code replaces the previous one. A code expires after 10 minutes, and a used code fails.
-  - The 11th send of a day is refused, and so is the 21st send in an hour from one IP.
-- **P7** Views:
-  - A GET creates no view.
-  - A start with consent creates exactly one view, and two tabs create two.
-  - A start without consent creates no view and no alert.
-- **P8** Tracking:
-  - Without consent, the tracker is not loaded and beacons are refused.
-  - Browser B cannot write to browser A's view.
-  - An unknown slide id is refused.
-  - 100 rapid beacons do not raise a view's total past its elapsed time plus 2 seconds.
-  - After consent is withdrawn, later beacons are refused, also with a restored old cookie.
-- **P9** Presenting:
-  - `/present` and its API return 403 without a team session.
-  - The screen window follows the presenter, recovers after either window reloads, and the presenter shows when the screen is lost.
-  - Both team PDFs render every slide, with its fonts.
-- **P10** Headers and CSP:
-  - Gated responses carry the four headers and the CSP.
-  - Presenting, the screen window, the read layout and the print view work under the enforced CSP.
-  - A script without a nonce and a cross-origin fetch are blocked, while Nuxt's lazy-loaded chunks work.
-- **P11** Mail:
-  - The code mail goes only to the link address.
-  - Production without mail configuration fails loudly.
+- **P1 Publish:** fails on an unknown type or field, a duplicate id, a missing `ask`, a chart without a source, an asset from outside the folder, a `javascript:` link, missing alt text, and a low-contrast colour. Warns at 21 slides, on a label headline, and when `seconds` exceed `minutes` × 60. Prints the outline. The version folder has no `deck.yml`; `viewer.json` has no notes.
+- **P2 Deep link:** `#/team` survives the gate and opens the team slide, in the deck and in the read layout.
+- **P3 Layout:**
+  - by keyboard only, page through, open and close the overview, use blackout, reach the end;
+  - at 320–430 px: the read layout, body ≥ 16 px, `detail` visible, no horizontal scroll at 200% zoom;
+  - no demo slide overflows at 1280×720 or 1280×900.
+- **P4 Gating:**
+  - no grant: 403 on the deck API and assets, also for a guessed path, `../` and a symlink;
+  - valid grant: still 403 on `deck.yml`, `notes.json`, files outside the manifest and another deck's version;
+  - no notes in the deck API or the PDF;
+  - a direct request to the nginx internal location fails;
+  - Range on a video works.
+- **P5 Links:**
+  - revoked, expired and archived links refuse codes, verification, grants and content, also with an old grant;
+  - a grant for A doesn't open B;
+  - two links in one browser both stay open;
+  - a cross-origin POST is refused.
+- **P6 Codes** (viewer and team):
+  - 5 wrong tries block; a new code doesn't reset the count, and replaces the old one;
+  - a code expires after 10 minutes, and a used code fails;
+  - the 11th send in a day is refused, and so is the 21st in an hour from one IP.
+- **P7 Views:**
+  - a GET creates none;
+  - a start with consent creates exactly one, and two tabs create two;
+  - without consent there is no view and no alert.
+- **P8 Tracking:**
+  - without consent, no tracker and beacons refused;
+  - browser B can't write to A's view;
+  - an unknown slide id is refused;
+  - 100 rapid beacons can't push a total past the elapsed time + 2 s;
+  - after withdrawal, beacons are refused, even with a restored old cookie.
+- **P9 Present:**
+  - 403 without a team session;
+  - the screen follows, recovers after either window reloads, and loss is shown;
+  - both team PDFs render every slide with its fonts.
+- **P10 Headers:**
+  - the four headers and the CSP are present;
+  - present, screen, read layout and print all work under the CSP;
+  - a script without a nonce, and a cross-origin fetch, are blocked, while Nuxt chunks load.
+- **P11 Mail:**
+  - the code goes only to the link's address;
+  - production without mail config fails loudly;
   - `<script>` in a name shows as text in the admin.
-- **P12** Erasure:
-  - Erasure revokes the recipient's links and grants and removes their codes, views and slide times.
-  - The daily job deletes data older than 12 months, and expired codes.
-- **P13** Browser, with the clock fixed:
+- **P12 Erasure:** revokes links and grants, and deletes codes, views and slide times. The daily job deletes data older than 12 months, and expired codes.
+- **P13 End to end:**
   1. Open the demo deck with stats.
-  2. Stay 5 seconds on slide 1, 3 on slide 2 and 2 on slide 3.
-  3. Hide the tab.
+  2. Spend 5, 3 and 2 s on slides 1–3, then hide the tab.
 
-  The admin shows 5, 3 and 2 seconds (±1), and slide 3 as the furthest.
+  The admin shows 5, 3 and 2 s (±1), with slide 3 as the furthest.
 
 ## Choices per startup
 
-- **Domain:** `deck.<domain>`, because recipients trust it.
-- **Mail provider and sending subdomain:** see Mail.
-- **Retention:** 12 months is proposed.
-- **Hosting:** an EU VPS, for example through Forge or Ploi.
-- **Measuring without consent:** this blueprint records nothing per viewer without consent. A startup that wants to log opens on legitimate interest decides that with a privacy lawyer, and then changes only Measure and Privacy.
-- **Existing decks:** rewrite them into `deck.yml`. An AI agent can do that from a PDF, with the founder checking each headline and number.
+- Domain: `deck.<domain>`.
+- Mail provider and sending subdomain.
+- Retention: 12 months proposed.
+- Hosting: an EU VPS, for example via Forge or Ploi.
+- Logging opens without consent: only after advice from a privacy lawyer. It changes Measure and Privacy.
+- Existing decks: convert them to `deck.yml`. An agent can do it from a PDF; the founder checks every headline and number.

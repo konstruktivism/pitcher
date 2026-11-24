@@ -1,69 +1,69 @@
 # Todo
 
-Build order. A step is done when its proofs from the plan pass.
+A step is done when its proofs pass.
 
 ## Now
 
-- [ ] `decision` **Domain, mail provider and hosting**
+- [ ] `decision` **Domain, mail provider, hosting**
   ~XS @startup `setup-choices`
   See "Choices per startup" in the plan.
 
-- [ ] `feature` **Skeleton: Nuxt app, database, team login**
+- [ ] `feature` **Skeleton**
   ~M @builder `skeleton`
-  Nuxt 4, the plan's tables through Drizzle, sealed session, nuxt-security with the CSP, team login by email code, Mailpit.
-  Proof: P6 (team code), P11 (mail configuration fails loudly).
+  Nuxt 4, the tables, sealed session, CSP, team login by email code, Mailpit.
+  Proof: P6 (team), P11.
 
-- [ ] `feature` **Deck format, slide components and publish**
+- [ ] `feature` **Deck and publish**
   ~M @builder `deck`
-  Zod schema, one Vue component per type, both outlines, `deck:publish` with lint, headline outline and snapshot, and the demo deck.
+  Zod schema, a component per type, both outlines, `deck:publish`, demo deck.
   Proof: P1.
   Blocked by: `skeleton`.
 
-- [ ] `feature` **Runtime, navigation and presenter**
+- [ ] `feature` **Runtime and presenter**
   ~M @builder `runtime`
-  reveal.js client-only with the plan's settings, the read layout for phones, `/present` with controls and its screen window, and print view.
+  reveal.js, the read layout, `/present` with its screen window, print view.
   Proof: P3, P9.
   Blocked by: `deck`.
 
-- [ ] `feature` **Links, gate and consent**
+- [ ] `feature` **Links and gate**
   ~M @builder `gate`
-  Links and their admin, grants as rows with consent, the code mail, limits, the Origin check, headers and the file route.
-  Proof: P2, P4, P5, P6 (viewer code), P10, P11.
+  Links and their admin, grants with consent, the code mail, limits, the Origin check, headers, the file route.
+  Proof: P2, P4, P5, P6 (viewer), P10, P11.
   Blocked by: `runtime`.
 
-- [ ] `feature` **Tracker and views**
+- [ ] `feature` **Tracking**
   ~M @builder `tracking`
-  A view from the start POST with consent, bound beacons, cumulative ms per slide, the furthest slide, and the bot flag.
+  Views, bound beacons, time per slide, furthest slide, bot flag.
   Proof: P7, P8.
   Blocked by: `gate`.
 
-- [ ] `feature` **Stats, alerts and invite text**
+- [ ] `feature` **Stats and alerts**
   ~M @builder `stats`
-  Per link and recipient, sessions, drop-off, alerts on first open, return and new browser, and "Copy invite".
+  Stats per link and recipient, alerts, "Copy invite".
   Proof: P13.
   Blocked by: `tracking`.
 
 - [ ] `feature` **Retention and erasure**
   ~S @builder `privacy`
-  The daily delete job for views, codes and counters, erasure per recipient, and no access log for `/d/`.
+  The daily delete job, erasure per recipient, no access log for `/d/`.
   Proof: P12.
   Blocked by: `tracking`.
 
 - [ ] `chore` **First release**
   ~S @builder `release`
-  An EU VPS behind nginx, the domain and mail live, all proofs green, and a test mail to a real inbox.
+  An EU VPS, domain and mail live, all proofs green, a test mail to a real inbox.
   Blocked by: `setup-choices`, `stats`, `privacy`.
 
 ## Later / blocked
 
-- [ ] `feature` **Editor UI**
+- [ ] `feature` **Editor**
   ~L @startup `editor`
-  Edit `deck.yml` in the browser with a live preview; publish keeps the same checks.
+  Edit `deck.yml` in the browser with a preview; the same checks apply.
 
 - [ ] `feature` **Comments per slide**
   ~S @startup `comments`
-  The notification goes to the link's creator, with the text escaped.
+  Notify the link's creator; escape the text.
 
 - [ ] `feature` **Phone remote**
   ~S @startup `remote`
-  Page the deck from a phone without a clicker.
+  Page the deck from a phone.
