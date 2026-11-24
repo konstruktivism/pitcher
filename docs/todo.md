@@ -10,7 +10,7 @@ Build order. A step is done when its proofs from the plan pass.
 
 - [ ] `feature` **Skeleton: Nuxt app, database, team login**
   ~M @builder `skeleton`
-  Nuxt 4, SQLite through Drizzle, sealed session, nuxt-security with the plan's CSP, team login by email code, Mailpit locally.
+  Nuxt 4, the plan's tables through Drizzle, sealed session, nuxt-security with the CSP, team login by email code, Mailpit.
   Proof: P6 (team code), P11 (mail configuration fails loudly).
 
 - [ ] `feature` **Deck format, slide components and publish**
@@ -27,7 +27,7 @@ Build order. A step is done when its proofs from the plan pass.
 
 - [ ] `feature` **Links, gate and consent**
   ~M @builder `gate`
-  Open and code links, consent in the grant, the code mail, limits, headers, the manifest file route and X-Accel-Redirect.
+  Links and their admin, grants as rows with consent, the code mail, limits, the Origin check, headers and the file route.
   Proof: P2, P4, P5, P6 (viewer code), P10, P11.
   Blocked by: `runtime`.
 
