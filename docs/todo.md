@@ -21,7 +21,7 @@ Build order. A step is done when its proofs from the plan pass.
 
 - [ ] `feature` **Runtime, navigation and presenter**
   ~M @builder `runtime`
-  reveal.js client-only with the plan's settings, scroll view with `detail`, `/present` with its screen window, and print view.
+  reveal.js client-only with the plan's settings, the read layout for phones, `/present` with controls and its screen window, and print view.
   Proof: P3, P9.
   Blocked by: `deck`.
 
@@ -64,6 +64,6 @@ Build order. A step is done when its proofs from the plan pass.
   ~S @startup `comments`
   The notification goes to the link's creator, with the text escaped.
 
-- [ ] `feature` **Phone remote and rehearsal feedback**
+- [ ] `feature` **Phone remote**
   ~S @startup `remote`
-  Page the deck from a phone; compare rehearsed time per slide with the plan after each run.
+  Page the deck from a phone without a clicker.

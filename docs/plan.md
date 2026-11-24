@@ -46,7 +46,7 @@ slides:
 | `id` | Defaults to the type, and is required when a type repeats. It is the deep link (`#/problem`) and the tracking key, so a published id never changes |
 | `headline` | Required. It states the claim as a sentence, so that the headlines read in a row tell the whole story |
 | `detail` | At most about 80 words. It shows only when the deck is read alone, never while presenting |
-| `sources` | Shown in small type. Required on `market` |
+| `sources` | Shown in small type, and may link to `https:` pages. Required on `market` |
 | `seconds` | The planned speaking time for the slide |
 | `notes` | For the team only |
 
@@ -76,11 +76,11 @@ slides:
 | `competition` | The alternatives, and the gap each one leaves | `points` |
 | `team` | Why these people | `people` (1–6) |
 | `financials` | Key metrics, the plan and the burn | `chart` or `figures` |
-| `ask` | What you ask, what it buys, and a vision line | `figures`, `points` |
+| `ask` | What you ask, what it buys, and a vision line | `amount`, `use_of_funds` (figures), `milestones` (points), `runway`; or `next_step` |
 | `appendix` | Risks and details, after the ask | any |
 
 **Outlines.**
-- `investor` is the default. It requires `title`, `problem`, `solution`, `team` and `ask`, and its `ask` needs `figures` for the amount and the use of funds.
+- `investor` is the default. It requires `title`, `problem`, `solution`, `team` and `ask`, and its `ask` needs `amount`, `use_of_funds` and `milestones`.
 - `sales` is for a customer or partner and follows Raskin's strategic narrative. It uses the same types in this order:
   1. `title`
   2. `why-now`: the change in their world
@@ -90,13 +90,13 @@ slides:
   6. `traction`: proof from customers like them
   7. `ask`: one next step
 
-  It requires `why-now`, `problem`, `solution`, `traction` and `ask`.
+  It requires `why-now`, `problem`, `solution`, `traction` and `ask`, and its `ask` needs `next_step`. The five moves before the ask are Raskin's; the next step is this blueprint's own addition.
 
 **Design.**
 - Each type is one Vue component, so the design is fixed.
 - Text is large: on the 1280×720 canvas, headlines are at least 48 px and body text at least 28 px.
 - A chart shows one message. The `highlight` is in the theme colour and the rest is grey, and values carry labels as well as colour.
-- Markdown in fields allows emphasis and links to the deck's own slides only. Raw HTML is never rendered.
+- Markdown in fields allows emphasis and links to the deck's own slides (`#/`), `https:` pages and `mailto:`. Raw HTML is never rendered.
 - There are no animations or fragments, so a slide means the same presented, read and printed.
 
 **Publish** is one command, `deck:publish <folder>`, and it is the quality gate.
@@ -106,8 +106,8 @@ slides:
 - an unknown type or a duplicate id;
 - a type that the outline requires but the deck lacks;
 - a chart without `unit`, `period` or `source`, or a `market` slide without `sources`;
-- an investor `ask` without `figures`;
-- an external URL;
+- an investor `ask` without `amount`, `use_of_funds` or `milestones`, or a sales `ask` without `next_step`;
+- an asset (image, font or video) from outside the folder, or a link that is not `#/`, `https:` or `mailto:`;
 - an image that has no alt text or is missing from the folder;
 - a theme colour below 4.5:1 contrast against the background.
 
@@ -117,6 +117,7 @@ slides:
 - more than 30 words presented on a slide, or more than 80 words in `detail`;
 - a headline over 12 words, or one that is only a label (a single word, or the type name);
 - a `cumulative` chart;
+- an investor `ask` without `runway`;
 - `seconds` that add up to more than `minutes`.
 
 **It prints** the headlines in order, so the founder reads the story in a dozen lines before sharing it.
@@ -132,28 +133,36 @@ slides:
 
 reveal.js (MIT) runs as a client-only component and renders the slide components into `<section id="<slide id>">`.
 
-**Settings:**
+**Settings,** with the reveal.js version pinned:
 - linear slides, with `hash: true`;
 - a progress bar and the slide number;
 - `controlsLayout: 'edges'`;
 - the overview (`O`/`Esc`) and blackout (`B`);
-- transition `none` when the viewer prefers reduced motion.
+- transition `none` when the viewer prefers reduced motion;
+- `scrollActivationWidth: null`, because phones get the read layout instead of reveal's scroll view.
 
 **This gives viewers:**
 - Arrow keys, Space, Home and End; swipe on touch; click zones at the edges.
 - A deep link per slide, a progress bar and a counter.
-- The scroll view, which switches on by itself at phone width. With `detail` under each slide, the deck then reads like a document.
+- On a wide screen, the link uses a 1280×900 canvas: the slide on top, with `detail` in a strip below it.
+- Below 640 px wide, the link shows the **read layout** instead of reveal. It uses the same components as a responsive document, with body text of at least 16 px and `detail` under each slide. A deep link scrolls to its slide. reveal scales its canvas, so its own scroll view would shrink 28 px text to about 9 px on a phone.
 - A screen-reader announcement of the current slide.
 
-**Present.** The team presents from `/present/<deck>`, which needs a team session. It shows:
-- the current and the next slide;
-- the speaker notes;
-- the elapsed time;
-- per slide, the planned time against the time spent.
-
-"Open screen" opens `/present/<deck>/screen`. That window shows only the slides and follows the presenter through a `BroadcastChannel`, so on a video call the founder shares only that window. Neither window shows `detail`.
-
-reveal's own speaker view is not used, because its notes plugin writes inline scripts into a popup and the CSP blocks them. The team can always print the deck to PDF from `/present`, as a fallback when the venue's network fails.
+**Present.** The team presents from `/present/<deck>`, which needs a team session.
+- **It shows** the current and the next slide, the speaker notes, the elapsed and remaining time, and per slide the planned time against the time spent.
+- **Controls:**
+  - a presenter clicker works, because it sends PageUp/PageDown or the arrow keys;
+  - the timer can start, pause and reset;
+  - picking a slide in the overview only previews it, and the screen follows on Enter, so the founder can find an appendix slide during questions;
+  - after a run, a summary of planned against spent per slide makes every run a rehearsal.
+- **Screen.** "Open screen" opens `/present/<deck>/screen`. That window shows only the slides, so on a video call the founder shares only that window. It follows the presenter through a `BroadcastChannel`:
+  - one channel per run, with one pinned version;
+  - the screen announces itself and receives the full state: the slide and blackout;
+  - every change sends the full state again, so either window can reload and recover;
+  - the presenter shows whether the screen is connected.
+- **No `detail`.** Neither window shows `detail`.
+- **Why not reveal's speaker view:** its notes plugin writes inline scripts into a popup, and the CSP blocks them.
+- **Offline copy.** Before a pitch, the team saves two PDFs from `/present`, the presentation (no `detail`, no notes) and the read version (with `detail`), and opens both once offline, checking fonts and page breaks. ⇒ ALWAYS have an offline copy ready before the pitch.
 
 **PDF.** When a link has `allow_pdf`, a button opens reveal's print view (`view: 'print'`). It opens only after the gate, once all assets have loaded. The PDF contains `detail` but never notes. ⇒ NEVER promise that a viewer cannot keep a copy: whatever the browser shows can be saved.
 
@@ -185,7 +194,7 @@ reveal's own speaker view is not used, because its notes plugin writes inline sc
 Measuring happens only with consent. Without it, the server keeps only what access needs: the grant and the limit counters. There is no view, no slide time and no alert.
 
 - **View.** With consent, each page load creates one view through `start.post`. A GET never counts, because mail scanners and link previews fetch links. The view id is stored in the sealed cookie, bound to its grant.
-- **Tracker.** It loads only on a view with consent and counts visible time per slide id (Page Visibility API). It pauses after 60 seconds without input, unless a video is playing.
+- **Tracker.** It loads only on a view with consent and counts visible time per slide id (Page Visibility API). In the read layout, the visible slide is the section most in view (IntersectionObserver). It pauses after 60 seconds without input, unless a video is playing.
   - It sends through `sendBeacon`, every 10 seconds, on each slide change and on `visibilitychange: hidden`.
   - Each beacon carries the **cumulative** milliseconds per slide, plus the furthest slide reached.
 - **Server.** A beacon is accepted only when it carries the view's cookie, the link is active, the grant is valid and consent is current.
@@ -300,8 +309,8 @@ Run every test with a fixed clock. Browser tests use Playwright's own headless C
 - **P2** A deep link `#/team` survives the gate and opens on the team slide.
 - **P3** Navigation and layout:
   - Using only the keyboard, the deck can be paged, its overview opened and closed, blackout used, and its end reached.
-  - At 390 px wide the deck shows the scroll view, with `detail` visible.
-  - No slide of the demo deck overflows at 1280×720 or at 390 px.
+  - At 320–430 px wide, the link shows the read layout: body text of at least 16 px, `detail` visible, and no horizontal scroll at 200% text zoom.
+  - No slide of the demo deck overflows its canvas, in the presenter (1280×720) or in the link (1280×900).
 - **P4** Gating:
   - Without a grant, the deck API and the assets return 403, also for a guessed path, `../` and a symlink.
   - With a valid grant, `deck.yml`, `notes.json` and a file outside the manifest still return 403.
@@ -327,10 +336,10 @@ Run every test with a fixed clock. Browser tests use Playwright's own headless C
 - **P9** Notes and presenting:
   - The deck API and the PDF never contain `notes`.
   - `/present` and its API return 403 without a team session.
-  - The screen window follows the presenter.
+  - The screen window follows the presenter, recovers after either window reloads, and the presenter shows when the screen is lost.
 - **P10** Headers and CSP:
   - Gated responses carry the four headers and the CSP.
-  - Presenting, the screen window and the print view work under the enforced CSP.
+  - Presenting, the screen window, the read layout and the print view work under the enforced CSP.
   - An external script or fetch is blocked.
 - **P11** Mail:
   - The code mail goes only to the link address.
